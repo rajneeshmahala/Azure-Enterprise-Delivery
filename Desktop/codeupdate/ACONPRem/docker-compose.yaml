@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  samba-ad:
+    image: instantlinux/samba-ad-dc  # Official Image
+    container_name: samba-ad
+    restart: unless-stopped
+    hostname: samba-dc
+    domainname: example.com
+    environment:
+      - DOMAIN=EXAMPLE
+      - REALM=example.com
+      - ADMIN_PASSWORD=SuperStrongPassword!
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+      - "88:88/tcp"
+      - "135:135/tcp"
+      - "139:139/tcp"
+      - "389:389/tcp"   # LDAP
+      - "445:445/tcp"
+      - "464:464/tcp"
+      - "3268:3268/tcp"
+      - "3269:3269/tcp"
+    volumes:
+      - samba_data:/var/lib/samba
+      - samba_config:/etc/samba
+    networks:
+      - samba-net
+
+  web-admin:
+    image: osixia/phpldapadmin  # Official phpLDAPadmin Image
+    container_name: phpldapadmin
+    restart: unless-stopped
+    environment:
+      - PHPLDAPADMIN_LDAP_HOSTS=samba-ad
+      - PHPLDAPADMIN_HTTPS=false   # Set to true if using HTTPS
+    ports:
+      - "6443:443"
+    networks:
+      - samba-net
+    depends_on:
+      - samba-ad
+
+networks:
+  samba-net:
+    driver: bridge
+
+volumes:
+  samba_data:
+  samba_config:
+

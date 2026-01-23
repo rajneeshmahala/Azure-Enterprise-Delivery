@@ -1,0 +1,23 @@
+services:
+  frrouting:
+    image: frrouting/frr:latest
+    container_name: frrouting
+    privileged: true
+    network_mode: "host"
+    volumes:
+      - ./frr.conf:/etc/frr/frr.conf
+      - ./vtysh.conf:/etc/frr/vtysh.conf
+      - ./log:/var/log/frr
+    environment:
+      - USER=frr
+      - GROUP=frr
+    restart: unless-stopped
+
+  frr-web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: frr-web
+    ports:
+      - "9000:9000"
+    restart: unless-stopped

@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.0
+    container_name: keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=adminpassword
+      - DB_VENDOR=postgres
+      - DB_ADDR=postgres:5432
+      - DB_DATABASE=keycloak
+      - DB_USER=keycloak_user
+      - DB_PASSWORD=keycloak_password
+      - KEYCLOAK_LOGLEVEL=INFO
+      - PROXY_ADDRESS_FORWARDING=true
+      - KEYCLOAK_HTTP_PORT=8080
+      - KEYCLOAK_HTTPS_PORT=8443
+      - KEYCLOAK_HOSTNAME=localhost
+      - KEYCLOAK_FRONTEND_URL=https://keycloak.spacepe.in
+      - KEYCLOAK_TLS_CERT_FILE=/etc/keycloak/keycloak.crt
+      - KEYCLOAK_TLS_KEY_FILE=/etc/keycloak/keycloak.key
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HTTPS_CERTIFICATE_FILE=/etc/keycloak/keycloak.crt
+      - KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/keycloak/keycloak.key
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - ./themes:/opt/keycloak/themes
+      - ./keycloak.crt:/etc/keycloak/keycloak.crt
+      - ./keycloak.key:/etc/keycloak/keycloak.key
+    depends_on:
+      - postgres
+    networks:
+      - keycloak-network
+    restart: always
+    command: " start"
+
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=keycloak_user
+      - POSTGRES_PASSWORD=keycloak_password
+      - POSTGRES_DB=keycloak
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - keycloak-network
+    restart: always
+
+volumes:
+  keycloak_data:
+  postgres_data:
+
+networks:
+  keycloak-network:
+    driver: bridge

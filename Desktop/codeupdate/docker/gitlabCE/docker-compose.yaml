@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab-ce
+    restart: always
+    hostname: localhost
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost'
+    ports:
+      - "8088:80"   # HTTP
+      - "443:443" # HTTPS (Optional for local testing)
+      - "22:22"   # SSH
+    volumes:
+      - ./gitlab/config:/etc/gitlab
+      - ./gitlab/logs:/var/log/gitlab
+      - ./gitlab/data:/var/opt/gitlab
+
+    # Custom entrypoint to set root password to 'Admin@123'
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        # Start GitLab services
+        /assets/wrapper &
+
+        # Wait for GitLab to start up (can be adjusted based on your setup)
+        sleep 30
+
+        # Set root password to 'Admin@123'
+        gitlab-rails runner "user = User.find_by(username: 'root'); user.password = 'Admin@123'; user.password_confirmation = 'Admin@123'; user.save!"
+
+        # Keep the container running
+        tail -f /dev/null
